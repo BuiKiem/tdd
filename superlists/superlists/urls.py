@@ -16,6 +16,6 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
-urlpatterns = [
-    path('admin/', admin.site.urls),
-]
+from lists import views as lists_views
+
+urlpatterns = [path("admin/", admin.site.urls), path("", lists_views.home_page)]
