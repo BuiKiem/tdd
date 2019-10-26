@@ -1,13 +1,12 @@
 """The functional tests for the to-do list application."""
-
 import time
-import unittest
 
+from django.test import LiveServerTestCase
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 
 
-class NewVisitorTestCase(unittest.TestCase):
+class NewVisitorTestCase(LiveServerTestCase):
     """Test when new user arrives application and uses the application."""
 
     def setUp(self) -> None:
@@ -26,7 +25,7 @@ class NewVisitorTestCase(unittest.TestCase):
         """Test if user can create their to-do list and see them."""
         # Edith has heard about a cool new online to-do app.
         # She goes to check out its homepage
-        self.browser.get("http://localhost:8000")
+        self.browser.get(self.live_server_url)
 
         # She notices the page title and header mention to-do lists
         self.assertIn("To-Do", self.browser.title)
@@ -66,7 +65,3 @@ class NewVisitorTestCase(unittest.TestCase):
 
         # Satisfied, she goes back to sleep.
         self.fail("Finish the test!")
-
-
-if __name__ == "__main__":
-    unittest.main(warnings="ignore")
