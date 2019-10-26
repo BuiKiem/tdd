@@ -1,13 +1,15 @@
 """The functional tests for the to-do list application."""
-
 import time
-import unittest
 
+from django.test import LiveServerTestCase
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import WebDriverException
+
+MAX_WAIT: int = 10
 
 
-class NewVisitorTestCase(unittest.TestCase):
+class NewVisitorTestCase(LiveServerTestCase):
     """Test when new user arrives application and uses the application."""
 
     def setUp(self) -> None:
@@ -16,17 +18,25 @@ class NewVisitorTestCase(unittest.TestCase):
     def tearDown(self) -> None:
         self.browser.quit()
 
-    def check_for_row_in_list_table(self, row_text: str) -> None:
+    def wait_for_row_in_list_table(self, row_text: str) -> None:
         """Helper function to check if the provided string is in the to-do list table."""
-        table = self.browser.find_element_by_id("list_table")
-        rows = table.find_elements_by_tag_name("tr")
-        self.assertIn(row_text, [row.text for row in rows])
+        start_time = time.time()
+        while True:
+            try:
+                table = self.browser.find_element_by_id("list_table")
+                rows = table.find_elements_by_tag_name("tr")
+                self.assertIn(row_text, [row.text for row in rows])
+                return
+            except (AssertionError, WebDriverException) as e:
+                if time.time() - start_time > MAX_WAIT:
+                    raise e
+                time.sleep(0.5)
 
     def test_can_start_a_list_and_retrieve_it_later(self) -> None:
         """Test if user can create their to-do list and see them."""
         # Edith has heard about a cool new online to-do app.
         # She goes to check out its homepage
-        self.browser.get("http://localhost:8000")
+        self.browser.get(self.live_server_url)
 
         # She notices the page title and header mention to-do lists
         self.assertIn("To-Do", self.browser.title)
@@ -45,7 +55,7 @@ class NewVisitorTestCase(unittest.TestCase):
         # "1: Buy peacock feathers" as an item in a to-do list
         inputbox.send_keys(Keys.ENTER)
         time.sleep(2)
-        self.check_for_row_in_list_table("1: Buy peacock feathers")
+        self.wait_for_row_in_list_table("1: Buy peacock feathers")
 
         # There is still a text box inviting her to add another.
         # She enters "Use peacock feathers to make a fly" (Edith is very methodical)
@@ -55,8 +65,8 @@ class NewVisitorTestCase(unittest.TestCase):
         time.sleep(1)
 
         # The page updates again, and now shows both items on her list
-        self.check_for_row_in_list_table("1: Buy peacock feathers")
-        self.check_for_row_in_list_table("2: Use peacock feathers to make a fly")
+        self.wait_for_row_in_list_table("1: Buy peacock feathers")
+        self.wait_for_row_in_list_table("2: Use peacock feathers to make a fly")
 
         # Edith wonders whether the site will remember her list.
         # Then she sees that the site has generated a unique URL for her
@@ -66,7 +76,3 @@ class NewVisitorTestCase(unittest.TestCase):
 
         # Satisfied, she goes back to sleep.
         self.fail("Finish the test!")
-
-
-if __name__ == "__main__":
-    unittest.main(warnings="ignore")
